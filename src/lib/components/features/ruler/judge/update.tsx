@@ -131,7 +131,7 @@ export default function JudgeUpdate({ uid, name, booth }: IProps) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {booths.map(({ name, slug }) => (
+                          {booths?.map(({ name, slug }) => (
                             <SelectItem key={slug} value={slug}>
                               {name}
                             </SelectItem>

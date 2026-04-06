@@ -35,8 +35,8 @@ export default function BroadcastLeaderboard() {
   return (
     <div className="w-full h-full p-2 flex flex-col">
       <div className="flex-1 w-full grid-cols-4 gap-2 hidden lg:grid">
-        <BroadcastLeaderboardList title="All Pos" />
-        {booths.map(({ slug }) => (
+        {/* <BroadcastLeaderboardList title="All Pos" /> */}
+        {booths?.map(({ slug }) => (
           <BroadcastLeaderboardComp key={slug} booth={slug} />
         ))}
       </div>

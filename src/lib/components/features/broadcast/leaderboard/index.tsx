@@ -78,7 +78,7 @@ export default function BroadcastLeaderboardComp({ booth }: IProps) {
       </h1>
       <ul className="flex w-full flex-col p-2 gap-2">
         {activities
-          .filter((_, index) => index < 5)
+          .filter((_, index) => index < 4)
           .map((activity, index) => {
             return (
               <li key={activity.id}>

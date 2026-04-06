@@ -37,10 +37,10 @@ export default function ParticipantAddBulk() {
       return;
     }
     if (file) {
-      readXlsxFile(file, { sheet: "User Peserta 2025" }).then((rows) => {
+      readXlsxFile(file, { sheet: "User Kelompok " }).then((rows) => {
         setParticipants(
           rows
-            .map((row) => ({ name: row[1], email: row[2], password: row[3] }))
+            .map((row) => ({ name: row[1], email: row[3], password: row[4] }))
             .filter((row) => row.name && row.email && row.password)
             .slice(1) as { name: string; email: string; password: string }[]
         );

@@ -1,15 +1,16 @@
-import { Trash, User } from "lucide-react";
 import Image from "next/image";
 import { Card, CardContent, CardTitle } from "~/lib/components/ui/card";
-// import BoothUpdate from "./update";
-// import BoothDelete from "./delete";
+import BoothUpdate from "./update";
+import BoothDelete from "./delete";
 
 interface IProps {
+  index: number;
   title: string;
   img: string;
+  slug: string;
 }
 
-export default function CardBooth({ title, img }: IProps) {
+export default function CardBooth({ index, title, img, slug }: IProps) {
   return (
     <li aria-label="CardBooth">
       <Card>
@@ -26,8 +27,8 @@ export default function CardBooth({ title, img }: IProps) {
           <div className="flex-1 flex flex-col gap-1">
             <CardTitle>{title}</CardTitle>
           </div>
-          {/* <BoothUpdate />
-          <BoothDelete /> */}
+          <BoothUpdate index={index} name={title} slug={slug} image={img} />
+          <BoothDelete index={index} />
         </CardContent>
       </Card>
     </li>

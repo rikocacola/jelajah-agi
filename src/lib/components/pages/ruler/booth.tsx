@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import CardBooth from "../../features/ruler/booth/card";
+import BoothAdd from "../../features/ruler/booth/add";
 import { onValue, ref } from "firebase/database";
 import { db } from "~/lib/api/firebase";
 
@@ -17,7 +18,7 @@ function Booth() {
   useEffect(() => {
     const boothRef = ref(db, "booth");
     const unsubscribe = onValue(boothRef, (snapshot) => {
-      setBooths(snapshot.val() as IBooth[]);
+      setBooths(Object.values(snapshot.val() ?? {}) as IBooth[]);
     });
 
     return () => {
@@ -27,11 +28,11 @@ function Booth() {
 
   return (
     <div className="flex flex-col gap-4 py-3 px-5">
-      <h1 className="text-3xl font-semibold text-center">List booth</h1>
-      {/* <BoothAdd />  */}
+      <h1 className="text-3xl font-semibold text-center">List pos</h1>
+      <BoothAdd />
       <ul className="flex flex-col gap-3">
-        {booths.map(({ image, name }, index: number) => (
-          <CardBooth key={index} title={name} img={image} />
+        {booths?.map(({ image, name, slug }, index: number) => (
+          <CardBooth key={index} index={index} title={name} img={image} slug={slug} />
         ))}
       </ul>
     </div>

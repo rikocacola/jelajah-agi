@@ -35,13 +35,13 @@ export default function RulerLeaderboard() {
     <div className="w-full p-2">
       <Tabs defaultValue={booths[0].slug} className="w-full">
         <TabsList className="w-full flex flex-row justify-start overflow-x-auto">
-          {booths.map(({ slug, name }) => (
+          {booths?.map(({ slug, name }) => (
             <TabsTrigger key={slug} value={slug}>
               {name}
             </TabsTrigger>
           ))}
         </TabsList>
-        {booths.map(({ slug }) => (
+        {booths?.map(({ slug }) => (
           <TabsContent value={slug} key={slug}>
             <RulerLeaderboardComp booth={slug} />
           </TabsContent>

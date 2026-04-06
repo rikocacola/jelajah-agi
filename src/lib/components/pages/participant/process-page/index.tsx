@@ -91,7 +91,7 @@ const ParticipantProcess = () => {
               {screen === "current" ? (
                 <p>Lihat Proses</p>
               ) : (
-                <p>Liat Saat ini</p>
+                <p>Lihat Saat ini</p>
               )}
             </Button>
           </div>
@@ -118,7 +118,8 @@ const ParticipantProcess = () => {
                 ) : currentActivity?.status === "process" ? (
                   checkCountdownValid(endCountdown) ? (
                     <UploadResult
-                      typeResult={currentBooth.type}
+                      typeResult={"file"}
+                      // typeResult={currentBooth.type}
                       activityId={participantStatus.currentActivity}
                       activity={currentActivity}
                       participantStatus={participantStatus}

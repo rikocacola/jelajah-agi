@@ -9,9 +9,9 @@ import {
   DialogTitle,
 } from "~/lib/components/ui/dialog";
 import { Input } from "~/lib/components/ui/input";
-import { storage, db } from "~/lib/api/firebase";
-import { uploadBytesResumable, ref, getDownloadURL } from "firebase/storage";
+import { db } from "~/lib/api/firebase";
 import { ref as refDb, update, get, child } from "firebase/database";
+import { createClient } from "~/utils/supabase/client";
 import { IParticipantStatus, ListBooth } from "~/lib/stores/app.atom";
 import { toast } from "~/lib/components/ui/use-toast";
 import { checkCountdownValid } from "~/lib/helper/check-countdown.helper";
@@ -43,7 +43,7 @@ export default function UploadResult({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [endCountdown, setEndCountDown] = useState<any>();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (checkCountdownValid(endCountdown)) {
       setIsLoading(true);
       if (typeResult === "file") {
@@ -53,31 +53,24 @@ export default function UploadResult({
           });
           return;
         }
-        const storageRef = ref(storage, `result/${uid}/${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-            const progress =
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log("Upload is " + progress + "% done");
-            switch (snapshot.state) {
-              case "running":
-                setIsLoading(true);
-                console.log("Upload is running");
-                break;
-            }
-          },
-          (error) => {
-            return error;
-          },
-          () => {
-            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-              updateData(downloadURL);
-            });
-          },
-        );
+        const supabase = createClient();
+        const filePath = `${uid}/${file.name}`;
+        const { data, error } = await supabase.storage
+          .from("jelajahamaliah")
+          .upload(filePath, file, { upsert: true });
+        if (error) {
+          setIsLoading(false);
+          toast({
+            variant: "destructive",
+            title: "Upload failed.",
+            description: error.message,
+          });
+          return;
+        }
+        const { data: urlData } = supabase.storage
+          .from("jelajahamaliah")
+          .getPublicUrl(data.path);
+        updateData(urlData.publicUrl);
       } else {
         updateData(result);
       }
@@ -98,6 +91,7 @@ export default function UploadResult({
     });
     get(child(dbRef, "booth")).then((snapshot) => {
       if (snapshot.exists()) {
+        console.log(snapshot.val());
         setListBooth(snapshot.val());
       }
     });
@@ -109,6 +103,8 @@ export default function UploadResult({
       ? participantStatus.currentBooth
       : participantStatus.index % 7;
   const currentBoothDetail = listBooth[currentIndex];
+
+  console.log("currentBoothDetail", currentBoothDetail);
 
   const updateData = (result: string) => {
     setIsLoading(true);

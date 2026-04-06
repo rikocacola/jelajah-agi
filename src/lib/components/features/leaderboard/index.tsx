@@ -1,133 +1,139 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent } from "../../ui/card";
-
-import { useEffect } from "react";
+import { child, get, onValue, ref } from "firebase/database";
+import { useEffect, useState } from "react";
 import { db } from "~/lib/api/firebase";
-import { ref, onValue, get, child } from "firebase/database";
 import { MAX_MEMBER } from "~/lib/utils/config";
+import { getTime } from "~/lib/helper/time.helper";
+import { formatterTime } from "~/lib/helper/formatter.helper";
+import { Card, CardContent } from "~/lib/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "~/lib/components/ui/accordion";
 
-interface ILeaderBoard {
-  uid: string;
+interface IBooth {
+  name: string;
+  slug: string;
+}
+
+interface ITeam {
+  id: string;
   name: string;
   score: number;
-  doneBooth: string[];
+  startDate: string;
   endDate: string;
 }
 
-const CardBoard = ({
-  teamName,
+const CardTeam = ({
   index,
+  name,
   score,
+  startDate,
+  endDate,
+}: ITeam & { index: number }) => (
+  <Card className="border border-primary shadow-md">
+    <CardContent className="flex justify-between items-center py-1 px-2 rounded-sm font-bold">
+      <div className="flex flex-row items-center gap-2">
+        <p
+          className={`p-2 rounded-full ${
+            index === 0
+              ? "bg-[#d4af37]"
+              : index === 1
+                ? "bg-[#c0c0c0]"
+                : index === 2
+                  ? "bg-[#CD7F32]"
+                  : ""
+          }`}
+        >
+          {index + 1}
+        </p>
+        <h3>{name}</h3>
+      </div>
+      <p className="font-semibold text-end text-xs">
+        <span className="text-green-600 text-sm">Score: {score}</span> <br />
+        Time: {formatterTime(getTime(endDate) - getTime(startDate)).formatted}
+      </p>
+    </CardContent>
+  </Card>
+);
+
+const BoothLeaderboard = ({
+  booth,
+  boothName,
 }: {
-  teamName: string;
-  index: number;
-  score: number;
+  booth: string;
+  boothName: string;
 }) => {
+  const [teams, setTeams] = useState<ITeam[]>([]);
+
+  useEffect(() => {
+    const activityRef = ref(db, "activity");
+    const unsubscribe = onValue(activityRef, async (snapshot) => {
+      if (!snapshot.exists()) return;
+      const endCountdown = await get(child(ref(db), "endCountdown"));
+      const snapshotData = Object.entries(snapshot.val()).map(
+        ([id, activity]) => ({ id, ...(activity as any) }),
+      );
+      const filtered = snapshotData.filter(
+        (item) => item.booth === booth && item.status === "done",
+      );
+      const withNames = await Promise.all(
+        filtered.map(async (item) => {
+          const nameSnap = await get(
+            child(ref(db), `account/${item.uid}/name`),
+          );
+          return {
+            id: item.id,
+            name: nameSnap.val(),
+            score:
+              item.score *
+              (item.totalMember > MAX_MEMBER
+                ? 1
+                : item.totalMember / MAX_MEMBER),
+            startDate: item.startDate,
+            endDate: item.endDate,
+          };
+        }),
+      );
+      withNames.sort((a, b) => {
+        if (a.score !== b.score) return b.score - a.score;
+        const aDiff = getTime(a.endDate) - getTime(a.startDate);
+        const bDiff = getTime(b.endDate) - getTime(b.startDate);
+        return aDiff - bDiff;
+      });
+      setTeams(withNames);
+    });
+    return () => unsubscribe();
+  }, [booth]);
+
   return (
-    <Card className="my-3 border border-primary shadow-md">
-      <CardContent
-        className={`flex justify-between items-center p-5 rounded-sm font-bold`}
-      >
-        <span>
-          <span
-            className={`mr-5 border p-3 rounded-full ${
-              index === 0 ? "bg-[#d4af37]" : ""
-            }`}
-          >
-            {index + 1}
-          </span>
-          {teamName}
-        </span>
-        <span>{score}</span>
-      </CardContent>
-    </Card>
+    <ul className="flex flex-col gap-2">
+      {teams.length === 0 && (
+        <p className="text-center text-muted-foreground text-sm">No data yet</p>
+      )}
+      {teams.map((team, index) => (
+        <li key={team.id}>
+          <CardTeam index={index} {...team} />
+        </li>
+      ))}
+    </ul>
   );
 };
 
-const LeaderboardList = ({ title = "Leaderboard" }: { title?: string }) => {
-  const [dataTeam, setDataTeam] = useState<any[]>([]);
+const LeaderboardList = ({ title = "Homepage" }: { title?: string }) => {
+  const [booths, setBooths] = useState<IBooth[]>([]);
 
   useEffect(() => {
-    const activityRef = ref(db, `activity`);
-    get(child(ref(db), "endCountdown")).then((countdownSnapshot) => {
-      const endCountdown = countdownSnapshot.val();
-      onValue(activityRef, async (snapshot) => {
-        if (snapshot.exists()) {
-          // setParticipantStatus(snapshot.val());
-          const response = snapshot.val();
-          const arraySnapshot = Object.keys(response)
-            .map((res) => {
-              let activity = response[res];
-              return activity;
-            })
-            .filter((item) => item.status === "done");
-          const reducedArray = arraySnapshot.reduce(
-            (accumulator: ILeaderBoard[], currValue) => {
-              const findIndex = accumulator.findIndex(
-                (item) => item.uid === currValue.uid
-              );
-              // Check if participants already in the list
-              // if not then score is placed not accumulated
-              if (findIndex === -1) {
-                return [
-                  ...accumulator,
-                  {
-                    uid: currValue.uid,
-                    name: currValue.teamName,
-                    score:
-                      currValue.score *
-                      (currValue.totalMember > MAX_MEMBER
-                        ? 1
-                        : currValue.totalMember / MAX_MEMBER),
-                    doneBooth: [currValue.booth],
-                    endDate: currValue.endDate,
-                  },
-                ];
-              } else {
-                // if yes then score is accumulated
-                const currentBooth = accumulator[findIndex];
-                const minuteLeft = Math.ceil(
-                  (new Date(endCountdown).getTime() -
-                    new Date(currValue.endDate).getTime()) /
-                    (1000 * 60)
-                );
-                accumulator[findIndex] = {
-                  ...accumulator[findIndex],
-                  score:
-                    currentBooth.doneBooth.length === 5
-                      ? currentBooth.score +
-                        currValue.score *
-                          (currValue.totalMember > MAX_MEMBER
-                            ? 1
-                            : currValue.totalMember / MAX_MEMBER) +
-                        10 * minuteLeft
-                      : currentBooth.score +
-                        currValue.score *
-                          (currValue.totalMember > MAX_MEMBER
-                            ? 1
-                            : currValue.totalMember / MAX_MEMBER),
-                  doneBooth:
-                    currValue.status === "done" &&
-                    !currentBooth.doneBooth.includes(currValue.booth)
-                      ? [...currentBooth.doneBooth, currValue.booth]
-                      : currentBooth.doneBooth,
-                  endDate: currValue.endDate,
-                };
-                return accumulator;
-              }
-            },
-            []
-          );
-          const result = reducedArray.sort(
-            (a: any, b: any) => b.score - a.score
-          );
-          setDataTeam(result);
-          // setAllActivity(arraySnapshot);
-        }
-      });
+    const boothRef = ref(db, "booth");
+    const unsubscribe = onValue(boothRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setBooths(Object.values(snapshot.val()) as IBooth[]);
+      }
     });
+    return () => unsubscribe();
   }, []);
 
   return (
@@ -135,17 +141,18 @@ const LeaderboardList = ({ title = "Leaderboard" }: { title?: string }) => {
       <div className="text-center mb-5">
         <h1 className="font-semibold text-2xl">{title}</h1>
       </div>
-
-      {dataTeam.map((item, index) => {
-        return (
-          <CardBoard
-            teamName={item.name}
-            key={index}
-            index={index}
-            score={item.score}
-          />
-        );
-      })}
+      <Accordion type="multiple" className="w-full">
+        {booths.map(({ slug, name }) => (
+          <AccordionItem key={slug} value={slug}>
+            <AccordionTrigger className="font-semibold">
+              Pos {name}
+            </AccordionTrigger>
+            <AccordionContent>
+              <BoothLeaderboard booth={slug} boothName={name} />
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
     </div>
   );
 };

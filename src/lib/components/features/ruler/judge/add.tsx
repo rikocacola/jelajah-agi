@@ -165,7 +165,7 @@ export default function JugeAdd() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {booths.map(({ name, slug }) => (
+                          {booths?.map(({ name, slug }) => (
                             <SelectItem key={slug} value={slug}>
                               {name}
                             </SelectItem>

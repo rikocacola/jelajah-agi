@@ -44,19 +44,21 @@ export default function LoginForm() {
         const userCredential = await signInWithEmailAndPassword(
           auth,
           values.email,
-          password
+          password,
         );
         fetchLog({ state: "login", ...values });
         if (userCredential.user) {
+          console.log("Login successful:", userCredential.user);
           const user = await get(
-            child(ref(db), `account/${userCredential.user.uid}`)
+            child(ref(db), `account/${userCredential.user.uid}`),
           );
+          console.log("User data:", user.val());
           if (user.val().type === "judge") {
             const boothSlug = user.val().booth as string;
             cookies.set("booth", boothSlug);
             const booths = await get(child(ref(db), "booth"));
             const booth = (booths.val() as any[]).filter(
-              (item) => item.slug === boothSlug
+              (item) => item.slug === boothSlug,
             );
             if (booth.length > 0) {
               cookies.set("boothType", booth[0].type);
@@ -79,17 +81,18 @@ export default function LoginForm() {
           setLoading(false);
           toast({
             variant: "destructive",
-            title: "Uh oh! Login failed.",
+            title: "Uh oh! Login failed. asd",
             description: "Please check your email and password again.",
             action: <ToastAction altText="Try again">Try again</ToastAction>,
           });
         }
       }
     } catch (error) {
+      console.error("Login error:", error);
       setLoading(false);
       toast({
         variant: "destructive",
-        title: "Uh oh! Login failed.",
+        title: "Uh oh! Login failed. 123",
         description: "Please check your email and password again.",
         action: <ToastAction altText="Try again">Try again</ToastAction>,
       });
