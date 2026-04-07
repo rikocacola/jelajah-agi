@@ -19,9 +19,16 @@ export default function HomeJudge() {
     };
   }, []);
 
-  if (endCountdown === "-") {
-    return <ParticipantOnBooth />;
-  } else {
-    return <ListTeamBooth />;
-  }
+  return (
+    <div>
+      <ParticipantOnBooth />
+      <ListTeamBooth />
+    </div>
+  );
+
+  // if (endCountdown === "-") {
+  //   return <ParticipantOnBooth />;
+  // } else {
+  //   return <ListTeamBooth />;
+  // }
 }
