@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Html5Qrcode } from "html5-qrcode";
+import { Scanner } from "@yudiel/react-qr-scanner";
 import { Button } from "~/lib/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useToast } from "~/lib/components/ui/use-toast";
@@ -66,106 +66,82 @@ export const ScanQr = () => {
       : participantStatus.index % 7;
   const currentBooth = listBooth[currentIndex];
 
-  useEffect(() => {
-    const html5QrCode = new Html5Qrcode("scan-qr-reader");
-    const qrCodeSuccessCallback = (decodedText: any) => {
-      // decodedText = text hasil scan
-      // decodedResult = {result text, decoderName, format dll}
+  const handleScan = (result: any[]) => {
+    if (result.length === 0) return;
+    const decodedText = result[0].rawValue;
 
-      html5QrCode.stop().then(() => {
-        // Show success message
-        setShowQRScanner(false);
-        if (checkCountdownValid(endCountdown)) {
-          if (decodedText === currentBooth.slug) {
-            // set Firebase for current booth already scanned
+    setShowQRScanner(false);
+    if (checkCountdownValid(endCountdown)) {
+      if (decodedText === currentBooth.slug) {
+        const dataActivty = {
+          startDate: new Date(),
+          booth: currentBooth.slug,
+          endDate: "-",
+          score: 0,
+          status: "needValidation",
+          totalMember: 0,
+          teamName: participantStatus.name,
+          uid,
+        };
+        const newActivityRef = push(ref(db, `activity`));
+        const newActivityKey = newActivityRef.key;
+        update(newActivityRef, dataActivty);
+        fetchLog({
+          state: "push activity",
+          key: newActivityKey,
+          ...dataActivty,
+        });
 
-            const dataActivty = {
-              startDate: new Date(),
-              booth: currentBooth.slug,
-              endDate: "-",
-              score: 0,
-              status: "needValidation",
-              totalMember: 0,
-              teamName: participantStatus.name,
-              uid,
-            };
-            const newActivityRef = push(ref(db, `activity`));
-            const newActivityKey = newActivityRef.key;
-            update(newActivityRef, dataActivty);
-            fetchLog({
-              state: "push activity",
-              key: newActivityKey,
-              ...dataActivty,
-            });
-
-            const userUpdateData = {
-              ...participantStatus,
-              currentBooth: currentIndex,
-              currentActivity: newActivityKey,
-              editableActivity: "",
-              isScanned: participantStatus.isScanned
-                ? [...participantStatus.isScanned, currentIndex]
-                : [currentIndex],
-            };
-            const updates: any = {};
-            updates["/account/" + uid] = userUpdateData;
-            update(ref(db), updates);
-            fetchLog({ state: "scan qr", ...updates });
-            toast({
-              variant: "success",
-              title: "Success Scan Booth",
-            });
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Can't scan this booth, please go to the current Booth",
-            });
-          }
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Uh oh! Failed.",
-            description: "Waktu telah habis.",
-          });
-        }
-        router.replace("/participants");
-      });
-      /* handle success */
-    };
-    const qrCodeErrorCallback = (error: any) => {
-      console.log(error);
-      /* handle success */
-    };
-
-    // Check if when scan is the time is still available !!
-
-    if (showQRScanner) {
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { height: 250, width: 250 } },
-        qrCodeSuccessCallback,
-        qrCodeErrorCallback,
-      );
+        const userUpdateData = {
+          ...participantStatus,
+          currentBooth: currentIndex,
+          currentActivity: newActivityKey,
+          editableActivity: "",
+          isScanned: participantStatus.isScanned
+            ? [...participantStatus.isScanned, currentIndex]
+            : [currentIndex],
+        };
+        const updates: any = {};
+        updates["/account/" + uid] = userUpdateData;
+        update(ref(db), updates);
+        fetchLog({ state: "scan qr", ...updates });
+        toast({
+          variant: "success",
+          title: "Success Scan Booth",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Can't scan this booth, please go to the current Booth",
+        });
+      }
     } else {
-      html5QrCode.clear();
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Failed.",
+        description: "Waktu telah habis.",
+      });
     }
-    // cleanup function when component will unmount
-    return () => {
-      //   html5QrCode.clear();
-    };
-  }, [showQRScanner]);
+    router.replace("/participants");
+  };
 
   return (
     <section className="h-[calc(100%-82px)]">
-      {/* <Button onClick={() => router.push("/participants")}>Back to List</Button> */}
       <div className="text-center font-bold uppercase text-xl">
         {currentBooth?.name}
       </div>
       <div className="flex items-center justify-center h-full flex-col">
-        <div
-          id="scan-qr-reader"
-          className="w-full h-[300px] flex items-center justify-center"
-        ></div>
+        <div className="w-auto h-4/6 flex items-center justify-center">
+          {showQRScanner && (
+            <div className="max-w-[600px] h-auto">
+              <Scanner
+                onScan={handleScan}
+                constraints={{ facingMode: "environment" }}
+                styles={{ container: { width: "100%", height: "100%" } }}
+              />
+            </div>
+          )}
+        </div>
         {showQRScanner ? (
           <div className="mt-2 flex justify-center">
             <Button

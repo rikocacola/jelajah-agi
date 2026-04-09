@@ -52,10 +52,10 @@ const NavbarParticipant = () => {
   return (
     <nav className="fixed bottom-0 left-0 h-[50px] border-t border-t-primary shadow-sm w-screen z-10">
       <ul className="flex justify-between size-full">
-        {dataMenu.map((menu) => {
+        {dataMenu.map((menu,index) => {
           return (
             <li
-              key={menu.id}
+              key={index}
               onClick={() => {
                 if (!menu.needAuth || uid) {
                   router.push(menu.href);

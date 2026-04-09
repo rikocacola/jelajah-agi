@@ -17,7 +17,7 @@ import { toast } from "~/lib/components/ui/use-toast";
 import { checkCountdownValid } from "~/lib/helper/check-countdown.helper";
 import { fetchLog } from "~/lib/api/log";
 import { useAtom } from "jotai";
-import { Html5Qrcode } from "html5-qrcode";
+import { Scanner } from "@yudiel/react-qr-scanner";
 
 interface IProps {
   typeResult: "file" | "link";
@@ -35,7 +35,6 @@ export default function UploadResult({
   uid,
 }: IProps) {
   const [showQRScanner, setShowQRScanner] = useState<boolean>(false);
-  const [html5QrcodeVar, setHtml5QrcodeVar] = useState<Html5Qrcode>();
   const [open, setOpen] = useState<boolean>(false);
   const [result, setResult] = useState<string>("");
   const [listBooth, setListBooth] = useAtom(ListBooth);
@@ -60,6 +59,7 @@ export default function UploadResult({
           .upload(filePath, file, { upsert: true });
         if (error) {
           setIsLoading(false);
+          console.log("error", error);
           toast({
             variant: "destructive",
             title: "Upload failed.",
@@ -137,61 +137,31 @@ export default function UploadResult({
     fetchLog({ state: "upload", ...updates });
   };
 
-  useEffect(() => {
-    const html5QrCode = new Html5Qrcode("scan-qr-reader");
-    setHtml5QrcodeVar(html5QrCode);
-    const qrCodeSuccessCallback = (decodedText: any) => {
-      // decodedText = text hasil scan
-      // decodedResult = {result text, decoderName, format dll}
+  const handleScan = (scanResult: any[]) => {
+    if (scanResult.length === 0) return;
+    const decodedText = scanResult[0].rawValue;
 
-      html5QrCode.stop().then(() => {
-        // Show success message
-        setShowQRScanner(false);
-        if (checkCountdownValid(endCountdown)) {
-          if (decodedText === currentBoothDetail.slugEnd) {
-            handleSubmit();
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Can't scan QR Code. Please scan the correct QR Code.",
-            });
-            setFile(null);
-            setOpen(false);
-          }
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Uh oh! Failed.",
-            description: "Waktu telah habis.",
-          });
-          setOpen(false);
-        }
-      });
-      /* handle success */
-    };
-    const qrCodeErrorCallback = (error: any) => {
-      console.log(error);
-      /* handle success */
-    };
-
-    // Check if when scan is the time is still available !!
-
-    if (showQRScanner) {
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { height: 250, width: 250 } },
-        qrCodeSuccessCallback,
-        qrCodeErrorCallback,
-      );
+    setShowQRScanner(false);
+    if (checkCountdownValid(endCountdown)) {
+      if (decodedText === currentBoothDetail.slugEnd) {
+        handleSubmit();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Can't scan QR Code. Please scan the correct QR Code.",
+        });
+        setFile(null);
+        setOpen(false);
+      }
     } else {
-      html5QrCode.clear();
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Failed.",
+        description: "Waktu telah habis.",
+      });
+      setOpen(false);
     }
-
-    // cleanup function when component will unmount
-    return () => {
-      //   html5QrCode.clear();
-    };
-  }, [showQRScanner]);
+  };
 
   return (
     <>
@@ -203,25 +173,29 @@ export default function UploadResult({
       >
         Upload hasil
       </Button>
-      <div
-        id="scan-qr-reader"
-        className={`w-screen h-screen !fixed top-0 left-0 bg-black ${showQRScanner ? "block" : "hidden"} z-50`}
-      />
       {showQRScanner && (
-        <div className="fixed bottom-0 z-50 py-2 flex justify-center items-center">
-          <Button
-            variant={"destructive"}
-            onClick={() => {
-              if (html5QrcodeVar) {
-                html5QrcodeVar.stop();
-              }
-              setFile(null);
-              setShowQRScanner(false);
-              setOpen(false);
-            }}
-          >
-            Stop Scan
-          </Button>
+        <div className="w-screen h-[calc(100%-82px)] fixed top-0 left-0 bg-black z-50 flex flex-col">
+          <div className="flex-1 h-4/6 w-auto flex items-center justify-center">
+            <div className="max-w-[600px] h-auto">
+              <Scanner
+                onScan={handleScan}
+                constraints={{ facingMode: "environment" }}
+                styles={{ container: { width: "100%", height: "100%" } }}
+              />
+            </div>
+          </div>
+          <div className="py-4 flex justify-center">
+            <Button
+              variant={"destructive"}
+              onClick={() => {
+                setFile(null);
+                setShowQRScanner(false);
+                setOpen(false);
+              }}
+            >
+              Stop Scan
+            </Button>
+          </div>
         </div>
       )}
       <Dialog open={open}>
