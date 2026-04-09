@@ -74,7 +74,7 @@ const BoothLeaderboard = ({
     const unsubscribe = onValue(activityRef, async (snapshot) => {
       if (!snapshot.exists()) return;
       const endCountdown = await get(child(ref(db), "endCountdown"));
-      const snapshotData = Object.entries(snapshot.val()).map(
+      const snapshotData = Object?.entries(snapshot.val()).map(
         ([id, activity]) => ({ id, ...(activity as any) }),
       );
       const filtered = snapshotData.filter(

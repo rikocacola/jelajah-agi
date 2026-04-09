@@ -29,7 +29,7 @@ export default function BroadcastLeaderboardComp({ booth }: IProps) {
     });
     const unsubscribe = onValue(activityRef, async (snapshot) => {
       const activitiesTemp: IActivity[] = [];
-      const snapshotData = Object.entries(snapshot.val()).map(
+      const snapshotData = Object?.entries(snapshot.val()).map(
         ([id, activity]) => ({ id, ...(activity as any) })
       );
       if (snapshotData) {

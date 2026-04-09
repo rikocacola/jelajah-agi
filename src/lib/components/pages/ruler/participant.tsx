@@ -26,7 +26,7 @@ export default function Participant() {
     const accountRef = ref(db, "account");
     const unsubscribe = onValue(accountRef, (snapshot) => {
       const accountTemp: IAccount[] = [];
-      const snapshotData = Object.entries(snapshot.val()).map(
+      const snapshotData = Object?.entries(snapshot.val()).map(
         ([id, account]) => ({ id, ...(account as any) })
       );
       if (snapshotData) {
@@ -46,7 +46,7 @@ export default function Participant() {
 
   async function handleGenerate() {
     const snapshot = await get(child(ref(db), "account"));
-    const account = Object.entries(snapshot.val()).map(([id, account]) => ({
+    const account = Object?.entries(snapshot.val()).map(([id, account]) => ({
       id,
       ...(account as any),
     }));

@@ -21,7 +21,7 @@ export default function ParticipantOnBooth() {
       if (boothIndex !== -1) {
         const unsubscribe = onValue(accountRef, async (snapshot) => {
           const participantsTemp: IParticipant[] = [];
-          const snapshotData = Object.entries(snapshot.val()).map(
+          const snapshotData = Object?.entries(snapshot.val()).map(
             ([id, participant]) => ({ id, ...(participant as any) })
           );
           if (snapshotData) {

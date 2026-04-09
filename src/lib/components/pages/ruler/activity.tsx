@@ -28,7 +28,7 @@ export default function Activity() {
   useEffect(() => {
     get(child(ref(db), "booth")).then((snapshot) => {
       const boothTemp: { slug: string; name: string }[] = [];
-      const snapshotData = Object.entries(snapshot.val()).map(
+      const snapshotData = Object?.entries(snapshot.val()).map(
         ([_, booth]) => booth as { slug: string; name: string }
       );
       if (snapshotData) {
@@ -43,7 +43,7 @@ export default function Activity() {
   useEffect(() => {
     get(child(ref(db), "account")).then((snapshot) => {
       const participantTemp: { name: string; id: string }[] = [];
-      const snapshotData = Object.entries(snapshot.val()).map(
+      const snapshotData = Object?.entries(snapshot.val()).map(
         ([id, participant]) => ({ id, ...(participant as { name: string }) })
       );
       if (snapshotData) {
@@ -59,7 +59,7 @@ export default function Activity() {
     const activityRef = ref(db, "activity");
     const unsubscribe = onValue(activityRef, (snapshot) => {
       const activityTemp: IActivity[] = [];
-      const snapshotData = Object.entries(snapshot.val()).map(
+      const snapshotData = Object?.entries(snapshot.val()).map(
         ([id, activity]) => ({
           id,
           booth:

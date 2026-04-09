@@ -20,7 +20,7 @@ export default function Judge() {
     const accountRef = ref(db, "account");
     const unsubscribe = onValue(accountRef, (snapshot) => {
       const accountTemp: IAccount[] = [];
-      const snapshotData = Object.entries(snapshot.val()).map(
+      const snapshotData = Object?.entries(snapshot.val()).map(
         ([id, account]) => ({ id, ...(account as any) })
       );
       if (snapshotData) {
