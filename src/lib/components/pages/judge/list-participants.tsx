@@ -15,25 +15,31 @@ export default function ParticipantOnBooth() {
     get(child(ref(db), "booth")).then((boothSnapshot) => {
       const booths = boothSnapshot.val() as any[];
       const boothIndex = booths.findIndex(
-        (booth) => booth.slug === cookies.get("booth")
+        (booth) => booth.slug === cookies.get("booth"),
       );
 
       if (boothIndex !== -1) {
         const unsubscribe = onValue(accountRef, async (snapshot) => {
           const participantsTemp: IParticipant[] = [];
           const snapshotData = Object?.entries(snapshot.val()).map(
-            ([id, participant]) => ({ id, ...(participant as any) })
+            ([id, participant]) => ({ id, ...(participant as any) }),
           );
           if (snapshotData) {
+            console.log("snapshotData", snapshotData);
             for (const item of snapshotData) {
+              const currentBooth =
+                item.currentBooth || item.index % booths.length;
               if (
                 item.type === "participants" &&
-                item.index % booths.length === boothIndex
+                currentBooth === boothIndex &&
+                !item.isScanned?.includes(currentBooth)
               ) {
                 participantsTemp.push(item as IParticipant);
               }
             }
           }
+          console.log("participantsTemp", participantsTemp);
+          console.log("boothIndex", boothIndex);
           setParticipants(participantsTemp);
         });
 
