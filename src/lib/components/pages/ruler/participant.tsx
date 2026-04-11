@@ -70,7 +70,7 @@ export default function Participant() {
     <div className="flex flex-col gap-4 py-3 px-5">
       <h1 className="text-3xl font-semibold text-center">List Participant</h1>
       <div className="flex flex-row justify-between">
-        <Button onClick={handleGenerate}>Generete Index</Button>
+        <Button onClick={handleGenerate}>Generate Index</Button>
         <div className="flex flex-row gap-2">
           <ParticipantAddBulk />
           <ParticipantAdd />
